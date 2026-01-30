@@ -3,42 +3,39 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>UltraDocs Ultimate</title>
-<!-- Quill Editor -->
+<title>UltraDocs Pro UI</title>
 <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Roboto&family=Montserrat&family=Open+Sans&family=Lato&family=Raleway&family=Oswald&family=Source+Sans+Pro&family=PT+Sans&display=swap" rel="stylesheet">
 <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<!-- Google Fonts -->
-<link href="https://fonts.googleapis.com/css2?family=Roboto&family=Montserrat&family=Open+Sans&family=Lato&family=Raleway&family=Oswald&family=Source+Sans+Pro&family=PT+Sans&display=swap" rel="stylesheet">
 <style>
   body { margin:0; font-family:'Roboto', sans-serif; background:#f5f5f5; color:#333; }
   header { display:flex; justify-content:space-between; align-items:center; padding:10px 20px; background:#1a73e8; color:white; }
-  header h1 { margin:0; font-size:1.5rem; }
-  button { cursor:pointer; }
-  #toolbar { display:flex; flex-wrap:wrap; background:white; padding:10px; gap:5px; border-bottom:1px solid #ccc; }
-  #toolbar select, #toolbar input[type=color] { padding:5px; }
-  #editor { height:70vh; margin:20px; background:white; padding:10px; border-radius:8px; overflow:auto; }
-  #sidebar { position:fixed; right:0; top:0; width:200px; height:100%; background:#f0f0f0; padding:10px; overflow:auto; border-left:1px solid #ccc; display:flex; flex-direction:column; gap:10px; }
+  header h1 { margin:0; font-size:1.6rem; }
+  button { cursor:pointer; border:none; background:#f0f0f0; padding:5px 8px; border-radius:4px; }
+  button:hover { background:#ddd; }
+  #toolbar { display:flex; flex-wrap:wrap; background:white; padding:10px; gap:5px; border-bottom:1px solid #ccc; box-shadow:0 2px 5px rgba(0,0,0,0.1);}
+  #toolbar select, #toolbar input[type=color] { padding:5px; border-radius:4px; border:1px solid #ccc; }
+  #editor { height:70vh; margin:20px; background:white; padding:15px; border-radius:8px; overflow:auto; box-shadow:0 2px 5px rgba(0,0,0,0.05);}
+  #sidebar { position:fixed; right:0; top:0; width:200px; height:100%; background:#f0f0f0; padding:10px; overflow:auto; border-left:1px solid #ccc; display:flex; flex-direction:column; gap:10px; box-shadow:-2px 0 5px rgba(0,0,0,0.05);}
   body.dark { background:#121212; color:white; }
   body.dark #editor { background:#1e1e1e; color:white; }
   body.dark #toolbar { background:#2c2c2c; color:white; }
   body.dark #sidebar { background:#1e1e1e; color:white; }
   .ql-editor { min-height:60vh; }
-  #schoolTools { display:flex; gap:5px; flex-wrap:wrap; }
-  #schoolTools button { font-size:0.9rem; padding:4px 6px; }
-  #fullscreenBtn { margin-left:5px; }
+  #schoolTools { display:flex; gap:5px; flex-wrap:wrap; margin:5px 20px; }
 </style>
 </head>
 <body>
 
 <header>
-  <h1>UltraDocs Ultimate</h1>
+  <h1>UltraDocs Pro UI</h1>
   <div>
     <button onclick="saveDoc()">Save</button>
-    <button onclick="exportTXT()">Export TXT</button>
-    <button onclick="exportPDF()">Export PDF</button>
-    <button id="fullscreenBtn" onclick="toggleFullscreen()">Fullscreen</button>
-    <button onclick="toggleDark()">Dark/Light</button>
+    <button onclick="exportTXT()">TXT</button>
+    <button onclick="exportPDF()">PDF</button>
+    <button onclick="toggleFullscreen()">Fullscreen</button>
+    <button onclick="toggleDark()">Dark</button>
   </div>
 </header>
 
@@ -55,6 +52,10 @@
     <option value="PT Sans">PT Sans</option>
   </select>
 
+  <!-- Font size -->
+  <button onclick="changeSize(-1)">A-</button>
+  <button onclick="changeSize(1)">A+</button>
+
   <!-- Formatting -->
   <button onclick="format('bold')"><b>B</b></button>
   <button onclick="format('italic')"><i>I</i></button>
@@ -65,7 +66,7 @@
   <button onclick="format('blockquote')">❝</button>
   <button onclick="format('code-block')">{ }</button>
 
-  <!-- Lists/Align -->
+  <!-- Lists & alignment -->
   <button onclick="format('list','ordered')">1.</button>
   <button onclick="format('list','bullet')">•</button>
   <button onclick="format('align','')">Left</button>
@@ -83,9 +84,9 @@
 
 <!-- School Tools -->
 <div id="schoolTools">
-  <button onclick="calculator()">Calculator</button>
-  <button onclick="scientificCalc()">Scientific Calc</button>
-  <button onclick="unitConverter()">Unit Converter</button>
+  <button onclick="calculator()">Calc</button>
+  <button onclick="scientificCalc()">Sci Calc</button>
+  <button onclick="unitConverter()">Unit Conv</button>
   <button onclick="mathInsert('²')">x²</button>
   <button onclick="mathInsert('³')">x³</button>
   <button onclick="mathInsert('√')">√</button>
@@ -94,150 +95,82 @@
 <div id="editor"></div>
 
 <div id="sidebar">
-  <h3>Version History</h3>
+  <h3>Versions</h3>
   <div id="versions"></div>
 </div>
 
 <script>
-  // Initialize Quill
-  const quill = new Quill('#editor', {
-    theme: 'snow',
-    modules: { toolbar: false }
-  });
+const quill = new Quill('#editor',{ theme:'snow', modules:{toolbar:false}});
 
-  // Formatting
-  function format(command, value=null){ quill.format(command, value || true); }
-  function undo(){ quill.history.undo(); }
-  function redo(){ quill.history.redo(); }
-  const fontSelector = document.getElementById('fontSelector');
-  fontSelector.addEventListener('change', () => { quill.format('font', fontSelector.value); });
-  document.getElementById('textColor').addEventListener('change', e => quill.format('color', e.target.value));
-  document.getElementById('bgColor').addEventListener('change', e => quill.format('background', e.target.value));
+// Formatting
+function format(cmd,val=null){ quill.format(cmd,val||true); }
+function undo(){ quill.history.undo(); }
+function redo(){ quill.history.redo(); }
 
-  // Save/Version
-  function saveDoc(){
-    const content = quill.getContents();
-    let versions = JSON.parse(localStorage.getItem('ultradocs-versions')||'[]');
-    versions.unshift({time:new Date().toLocaleString(), content});
-    localStorage.setItem('ultradocs-versions', JSON.stringify(versions));
-    loadVersions();
-    alert('Saved!');
-  }
-  function loadVersions(){
-    const container = document.getElementById('versions');
-    container.innerHTML = '';
-    const versions = JSON.parse(localStorage.getItem('ultradocs-versions')||'[]');
-    versions.forEach((v,i)=>{
-      const btn = document.createElement('button');
-      btn.textContent = v.time;
-      btn.onclick = ()=>quill.setContents(v.content);
-      container.appendChild(btn);
-    });
-  }
+// Fonts
+const fontSelector=document.getElementById('fontSelector');
+fontSelector.addEventListener('change',()=>{ quill.format('font',fontSelector.value); });
+
+// Color
+document.getElementById('textColor').addEventListener('change',e=>quill.format('color',e.target.value));
+document.getElementById('bgColor').addEventListener('change',e=>quill.format('background',e.target.value));
+
+// Font size increase/decrease
+function changeSize(delta){
+  const range=quill.getSelection();
+  if(!range) return;
+  let size = quill.getFormat(range).size || 16;
+  size = Math.max(8, Math.min(72, size+delta));
+  quill.format('size',size+'px');
+}
+
+// Save/Versions
+function saveDoc(){
+  const content = quill.getContents();
+  let versions = JSON.parse(localStorage.getItem('ultradocs-versions')||'[]');
+  versions.unshift({time:new Date().toLocaleString(), content});
+  localStorage.setItem('ultradocs-versions',JSON.stringify(versions));
   loadVersions();
-  const last = JSON.parse(localStorage.getItem('ultradocs-versions')||'[]')[0];
-  if(last) quill.setContents(last.content);
+  alert('Saved!');
+}
 
-  // Dark Mode
-  function toggleDark(){ document.body.classList.toggle('dark'); }
-
-  // Export
-  function exportTXT(){
-    const blob = new Blob([quill.getText()], {type:'text/plain'});
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-    a.download = 'document.txt'; a.click();
-  }
-  async function exportPDF(){
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    const text = quill.getText();
-    const lines = doc.splitTextToSize(text, 180);
-    doc.text(lines, 10, 10);
-    doc.save('document.pdf');
-  }
-
-  // Insert Table
-  function insertTable(){
-    const rows = prompt("Rows?", 2);
-    const cols = prompt("Columns?", 2);
-    if(!rows || !cols) return;
-    let table = '<table border="1" style="border-collapse:collapse;">';
-    for(let r=0;r<rows;r++){
-      table += '<tr>';
-      for(let c=0;c<cols;c++) table += '<td>&nbsp;</td>';
-      table += '</tr>';
-    }
-    table += '</table><p></p>';
-    const range = quill.getSelection(true);
-    quill.clipboard.dangerouslyPasteHTML(range.index, table);
-  }
-
-  // Insert Image
-  function insertImage(e){
-    const file = e.target.files[0];
-    if(!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      const range = quill.getSelection(true);
-      quill.insertEmbed(range.index, 'image', reader.result, 'user');
-    };
-    reader.readAsDataURL(file);
-  }
-
-  // Auto-links
-  quill.on('text-change', function(delta, oldDelta, source){
-    if(source !== 'user') return;
-    const text = quill.getText();
-    const urlRegex = /(https?:\/\/[^\s]+)/g;
-    const matches = text.match(urlRegex);
-    if(matches){
-      matches.forEach(url=>{
-        const index = text.indexOf(url);
-        quill.formatText(index, url.length, 'link', url);
-      });
-    }
+function loadVersions(){
+  const container=document.getElementById('versions'); container.innerHTML='';
+  const versions=JSON.parse(localStorage.getItem('ultradocs-versions')||'[]');
+  versions.forEach(v=>{
+    const btn=document.createElement('button');
+    btn.textContent=v.time; btn.onclick=()=>quill.setContents(v.content);
+    container.appendChild(btn);
   });
+}
+loadVersions();
+const last = JSON.parse(localStorage.getItem('ultradocs-versions')||'[]')[0]; if(last) quill.setContents(last.content);
 
-  // Fullscreen
-  function toggleFullscreen(){
-    const el = document.documentElement;
-    if(!document.fullscreenElement) el.requestFullscreen();
-    else document.exitFullscreen();
-  }
+// Dark mode
+function toggleDark(){ document.body.classList.toggle('dark'); }
 
-  // School Tools
-  function calculator(){ const res=prompt("Enter expression:"); if(res!==null) alert("Result: "+eval(res)); }
-  function scientificCalc(){ const res=prompt("Enter expression (sin, cos, sqrt...):"); if(res!==null) alert("Result: "+eval(res)); }
-  function unitConverter(){
-    const val=prompt("Enter value:"); 
-    const type=prompt("Type (cm-m, g-kg, ml-l):");
-    if(!val||!type) return;
-    let out;
-    if(type==="cm-m") out = val/100+" m";
-    else if(type==="g-kg") out = val/1000+" kg";
-    else if(type==="ml-l") out = val/1000+" l";
-    else out="Invalid";
-    alert(out);
-  }
-  function mathInsert(symbol){
-    const range = quill.getSelection(true);
-    quill.insertText(range.index, symbol);
-    quill.setSelection(range.index+symbol.length);
-  }
+// Export
+function exportTXT(){ const blob=new Blob([quill.getText()],{type:'text/plain'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='document.txt'; a.click();}
+async function exportPDF(){ const {jsPDF}=window.jspdf; const doc=new jsPDF(); const text=quill.getText(); doc.text(text,10,10); doc.save('document.pdf'); }
 
-  // Drag-drop images
-  quill.root.addEventListener('drop', e=>{
-    e.preventDefault();
-    if(e.dataTransfer.files.length){
-      const file = e.dataTransfer.files[0];
-      const reader = new FileReader();
-      reader.onload = () => {
-        const range = quill.getSelection(true);
-        quill.insertEmbed(range.index, 'image', reader.result, 'user');
-      };
-      reader.readAsDataURL(file);
-    }
-  });
+// Tables
+function insertTable(){ const rows=prompt("Rows?",2); const cols=prompt("Cols?",2); if(!rows||!cols)return; let table='<table border="1" style="border-collapse:collapse;">'; for(let r=0;r<rows;r++){ table+='<tr>'; for(let c=0;c<cols;c++) table+='<td>&nbsp;</td>'; table+='</tr>'; } table+='</table><p></p>'; const range=quill.getSelection(true); quill.clipboard.dangerouslyPasteHTML(range.index,table); }
+
+// Images
+function insertImage(e){ const file=e.target.files[0]; if(!file) return; const reader=new FileReader(); reader.onload=()=>{ const range=quill.getSelection(true); quill.insertEmbed(range.index,'image',reader.result,'user'); }; reader.readAsDataURL(file); }
+quill.root.addEventListener('drop',e=>{ e.preventDefault(); if(e.dataTransfer.files.length){ const file=e.dataTransfer.files[0]; const reader=new FileReader(); reader.onload=()=>{ const range=quill.getSelection(true); quill.insertEmbed(range.index,'image',reader.result,'user'); }; reader.readAsDataURL(file); } });
+
+// Auto-links
+quill.on('text-change',(delta,old,source)=>{ if(source!=='user')return; const text=quill.getText(); const urls=text.match(/https?:\/\/[^\s]+/g); if(urls) urls.forEach(url=>{ const index=text.indexOf(url); quill.formatText(index,url.length,'link',url); }); });
+
+// Fullscreen
+function toggleFullscreen(){ const el=document.documentElement; if(!document.fullscreenElement) el.requestFullscreen(); else document.exitFullscreen(); }
+
+// School tools
+function calculator(){ const res=prompt("Expression:"); if(res!=null) alert("Result: "+eval(res)); }
+function scientificCalc(){ const res=prompt("Expression (Math functions allowed)"); if(res!=null) alert("Result: "+eval(res)); }
+function unitConverter(){ const val=prompt("Value:"); const type=prompt("Type (cm-m, g-kg, ml-l)"); if(!val||!type) return; let out; if(type==="cm-m") out=val/100+" m"; else if(type==="g-kg") out=val/1000+" kg"; else if(type==="ml-l") out=val/1000+" l"; else out="Invalid"; alert(out);}
+function mathInsert(symbol){ const range=quill.getSelection(true); quill.insertText(range.index,symbol); quill.setSelection(range.index+symbol.length);}
 </script>
 </body>
 </html>
